@@ -1,4 +1,4 @@
-function [RMSE ERROR GLOBAL LOCAL] = ProgressiveStandardization(EC, OFFSET, LIMIT)
+function [RMSE ERROR GLOBAL LOCAL] = progressive_standardization_adjusted(EC, OFFSET, LIMIT)
 
 LOCAL = zeros(1, LIMIT);
 RANGE = EC(OFFSET:OFFSET+LIMIT-1);

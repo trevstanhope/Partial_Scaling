@@ -24,23 +24,15 @@ disp('Simple Normalization Adjusted:'); disp(std(g3));
 disp('Simple Standardization Adjusted:'); disp(std(g4));
 
 % Display RMSE Change
-disp('Creating X-Vector...');
+disp('
 P = 1:(PASS - OFFSET + 1);
-
-% Plot Graph
-disp('Rendering Graph...');
 fig1 = figure;
 plot(P, r1,'g', P,r2, 'b', P, r3, 'k', P, r4, 'm');
-
-% Figure Settings
-disp('Setting Plot Parameters');
 xlabel('Point in Pass');
 ylabel('RMSE of Local vs. Global')
 ylim([0 1]);
 legend({'Scaling', 'Quartile Scaling','Adj. Normalization','Adj. Standardization'});
 title(strcat('Full Field Progressive Scaling [', FILENAME, ']'));
-
-% Wait for close
-waitforbuttonpress();
 saveas(gcf, strcat('Progressive-', FILENAME, '-', '.tif'));
+waitforbuttonpress();
 close;

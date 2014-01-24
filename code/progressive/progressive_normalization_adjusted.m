@@ -1,4 +1,4 @@
-function [RMSE ERROR GLOBAL LOCAL] = ProgressiveNormalization1(EC, OFFSET, LIMIT)
+function [RMSE ERROR GLOBAL LOCAL] = progressive_normalization_adjusted(EC, OFFSET, LIMIT)
 
 LOCAL = zeros(1, LIMIT);
 RANGE = EC(OFFSET:OFFSET+LIMIT-1);

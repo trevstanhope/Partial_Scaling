@@ -1,4 +1,5 @@
-function [RMSE GLOBAL LOCAL] = QuartileScaling(EC,OFFSET,PASS)
+%% Simple Quartile
+function [RMSE GLOBAL LOCAL] = simple_quartile(EC,OFFSET,PASS)
 
 GLOBAL = 0.5*(EC - prctile(EC,25)) / (prctile(EC,75) - prctile(EC,25)) + 0.25;
 GLOBAL(GLOBAL > 1) = 1;

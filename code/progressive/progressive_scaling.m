@@ -1,4 +1,4 @@
-function [RMSE ERROR GLOBAL LOCAL] = ProgressiveScaling(EC, OFFSET, LIMIT)
+function [RMSE ERROR GLOBAL LOCAL] = progressive_scaling(EC, OFFSET, LIMIT)
 
 LOCAL = zeros(1, LIMIT);
 RANGE = EC(OFFSET:OFFSET+LIMIT-1);

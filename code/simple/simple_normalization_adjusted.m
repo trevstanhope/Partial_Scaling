@@ -1,4 +1,5 @@
-function [RMSE GLOBAL LOCAL] = AdjustedMedianScaling(EC,OFFSET,PASS)
+%% Simple Normalization (Adjusted)
+function [RMSE GLOBAL LOCAL] = simple_normalization_adjusted(EC,OFFSET,PASS)
 
 GLOBAL = (EC - min(EC)) / (2*median(EC) - min(EC));
 GLOBAL(GLOBAL > 1) = 1;

@@ -1,4 +1,4 @@
-function [RMSE ERROR GLOBAL LOCAL] = ProgressiveQuartileScaling(EC, OFFSET, LIMIT)
+function [RMSE ERROR GLOBAL LOCAL] = progressive_quartile(EC, OFFSET, LIMIT)
 
 LOCAL = zeros(1, LIMIT);
 RANGE = EC(OFFSET:OFFSET+LIMIT-1);

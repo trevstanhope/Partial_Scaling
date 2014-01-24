@@ -1,25 +1,29 @@
 %% Randomized Pass
-%% Randomized n-Pass algorithm of a single field
-clc; clear all; close all;
+% Randomized n-Pass algorithm comparison of all fields
+clc;
+clear all;
+close all;
 
-% Import
-PASS = input('Pass Length: ');
-SAMPLES = input('Passes to Sample: ');
+% Setup
+PASS = input('Enter number of sampled points per pass: ');
+SAMPLES = input('Enter number of passes to sample: ');
 METHODS = 4;
 FIELDS = 6;
-RESULTS = nan(SAMPLES, FIELDS, METHODS);
+RESULTS = nan(SAMPLES, FIELDS, METHODS); % compare the methods for all fields
 headers = {'BR','HE','HU','KR','LU','RA'};
 
 % Randomize samples
 for field = 1:FIELDS
     disp(strcat('Select data file for: ', headers(field)));
-    [EC1, ~, ~, ~, ~, ~, FILENAME] = import_csv();
+    [EC, ~, ~, ~, ~, ~, FILENAME] = import_csv();
     for sample = 1:SAMPLES
-        OFFSET = randi(length(EC1)-PASS);
-        [r1, ~, ~] = NormalScaling(EC1,OFFSET,PASS);
-        [r2, ~, ~] = QuartileScaling(EC1,OFFSET,PASS);
-        [r3, ~, ~] = MedianScaling(EC1,OFFSET,PASS);
-        [r4, ~, ~] = AdjustedStandardScaling(EC1,OFFSET,PASS);
+        OFFSET = randi(length(EC)-PASS); % randomize start of pass
+        [r1, ~, ~] = simple_scaling(EC,OFFSET,PASS);
+        [r2, ~, ~] = simple_quartile(EC,OFFSET,PASS);
+        [r3, ~, ~] = simple_normalization_adjusted(EC,OFFSET,PASS);
+        [r4, ~, ~] = simple_standardization_adjusted(EC,OFFSET,PASS);
+        
+        % Store RMSE (Local vs. Global) of sample pass
         RESULTS(sample,field,1) = r1;
         RESULTS(sample,field,2) = r2;
         RESULTS(sample,field,3) = r3;
@@ -28,12 +32,16 @@ for field = 1:FIELDS
 end
 
 % Save results
-%csvwrite_with_headers(strcat('Scaling-', int2str(PASS), '-', int2str(SAMPLES), '-', FILENAME), RESULTS(:,:,1), headers);
-%csvwrite_with_headers(strcat('Quartile_Scaling-', int2str(PASS), '-', int2str(SAMPLES), '-', FILENAME), RESULTS(:,:,2), headers);
-csvwrite_with_headers(strcat('Adj_Normalization-', int2str(PASS), '-', int2str(SAMPLES), '-', FILENAME), RESULTS(:,:,3), headers);
-%csvwrite_with_headers(strcat('Adj_Standardization-', int2str(PASS), '-', int2str(SAMPLES), '-', FILENAME), RESULTS(:,:,4), headers);
+csvwrite_with_headers(strcat('Scaling_', int2str(PASS), '_', int2str(SAMPLES), '_', FILENAME),RESULTS(:,:,1), headers);
+csvwrite_with_headers(strcat('Quartile_', int2str(PASS), '_', int2str(SAMPLES), '_', FILENAME), RESULTS(:,:,2), headers);
+csvwrite_with_headers(strcat('Adjusted Normalization_', int2str(PASS), '_', int2str(SAMPLES), '_', FILENAME), RESULTS(:,:,3), headers);
+csvwrite_with_headers(strcat('Adjusted Standardization_', int2str(PASS), '_', int2str(SAMPLES), '_', FILENAME), RESULTS(:,:,4), headers);
 
-% Build sets
+%% Display Results
+% This section can be commented out because boxplot rendering can be done
+% in Microsoft Excel.
+
+% % Build sets
 % group = [repmat({'BR'}, SAMPLES, 1);...
 %         repmat({'HE'}, SAMPLES, 1);...
 %         repmat({'HU'}, SAMPLES, 1);...
