@@ -1,41 +1,91 @@
 %% Randomized Pass
 % Randomized n-Pass algorithm comparison of all fields
+
+%% Setup
 clc;
 clear all;
 close all;
-
-% Setup
-PASS = input('Enter number of sampled points per pass: ');
-SAMPLES = input('Enter number of passes to sample: ');
+PASS_MIN = input('Minimum number of sampled points per pass (PASS_MIN): ');
+PASS_MAX = input('Maximum number of sampled points per pass (PASS_MAX): ');
+INTERVAL = input('Interval between pass lengths (INTERVAL): ');
+SAMPLES = input('Number of samples per pass length (SAMPLES): ');
 METHODS = 4;
-FIELDS = 6;
-RESULTS = nan(SAMPLES, FIELDS, METHODS); % compare the methods for all fields
-headers = {'BR','HE','HU','KR','LU','RA'};
+PARAMETERS = 7; % number of scaling parameters being considered
 
-% Randomize samples
-for field = 1:FIELDS
-    disp(strcat('Select data file for: ', headers(field)));
+%% Get Field EC Data
+DATA = struct('BR',[],'HE',[],'HU',[],'KR',[],'LU',[],'RA',[]);
+FIELDNAMES = {'BR','HE','HU','KR','LU','RA'};
+FIELDS = fieldnames(DATA);
+for field = 1:numel(FIELDS)
+    fprintf('Select data file for field #%d --> ', field);
     [EC, ~, ~, ~, ~, ~, FILENAME] = import_csv();
-    for sample = 1:SAMPLES
-        OFFSET = randi(length(EC)-PASS); % randomize start of pass
-        [r1, ~, ~] = simple_scaling(EC,OFFSET,PASS);
-        [r2, ~, ~] = simple_quartile(EC,OFFSET,PASS);
-        [r3, ~, ~] = simple_normalization_adjusted(EC,OFFSET,PASS);
-        [r4, ~, ~] = simple_standardization_adjusted(EC,OFFSET,PASS);
+    disp(FILENAME);
+    DATA.(FIELDS{field}) = EC;
+end
+
+%% Random Sampling
+fprintf('\nRunning Pass Randomization... \n');
+PASSES = (PASS_MAX - PASS_MIN)/INTERVAL; % the number of pass lengths sampled
+RESULTS = nan(length(FIELDS), SAMPLES, PASSES, METHODS); % RMSE of methods for all fields
+VALUES = nan(length(FIELDS), SAMPLES, PASSES, PARAMETERS); % Average values for scaling parameters
+for field = 1:numel(FIELDS)
+    fprintf('Field (#): %d \n', field);
+    data = DATA.(FIELDS{field}); % store the data for each field in 'data'
+    
+    % For each pass length...
+    for pass = 1:((PASS_MAX - PASS_MIN)/INTERVAL) % the index number of the pass length
+        pass_length = PASS_MIN + pass*INTERVAL; % the length of the pass
+        fprintf('Pass Length (seconds): %d \n', pass_length);
         
-        % Store RMSE (Local vs. Global) of sample pass
-        RESULTS(sample,field,1) = r1;
-        RESULTS(sample,field,2) = r2;
-        RESULTS(sample,field,3) = r3;
-        RESULTS(sample,field,4) = r4;
+        % Randomize the sample offset.
+        for sample = 1:SAMPLES
+            
+            % Get values for a random section of the field
+            offset = randi(length(data) - pass_length); % position in field is gaussian randomized
+            [MEDIAN, MEAN, MIN, MAX, STD, PERCENT25, PERCENT75] = simple_parameters(data, offset, pass_length);
+            [R1, ~, ~] = simple_scaling(data, offset, pass_length);
+            [R2, ~, ~] = simple_quartile(data, offset, pass_length);
+            [R3, ~, ~] = simple_normalization(data, offset, pass_length);
+            [R4, ~, ~] = simple_standardization_adjusted(data, offset, pass_length);
+            
+            % Save RMSE values to huge matrix
+            RESULTS(field, sample, pass, 1) = R1;
+            RESULTS(field, sample, pass, 2) = R2;
+            RESULTS(field, sample, pass, 3) = R3;
+            RESULTS(field, sample, pass, 4) = R4;
+            
+            % Save paramter values to huge matrix
+            VALUES(field, sample, pass, 1) = MEDIAN;
+            VALUES(field, sample, pass, 2) = MEAN;
+            VALUES(field, sample, pass, 3) = MIN;
+            VALUES(field, sample, pass, 4) = MAX;
+            VALUES(field, sample, pass, 5) = STD;
+            VALUES(field, sample, pass, 6) = PERCENT25;
+            VALUES(field, sample, pass, 7) = PERCENT75;
+        end    
     end
 end
 
-% Save results
-csvwrite_with_headers(strcat('Scaling_', int2str(PASS), '_', int2str(SAMPLES), '_', FILENAME),RESULTS(:,:,1), headers);
-csvwrite_with_headers(strcat('Quartile_', int2str(PASS), '_', int2str(SAMPLES), '_', FILENAME), RESULTS(:,:,2), headers);
-csvwrite_with_headers(strcat('Adjusted Normalization_', int2str(PASS), '_', int2str(SAMPLES), '_', FILENAME), RESULTS(:,:,3), headers);
-csvwrite_with_headers(strcat('Adjusted Standardization_', int2str(PASS), '_', int2str(SAMPLES), '_', FILENAME), RESULTS(:,:,4), headers);
+%% Write to File
+% Save results to Excel
+
+% Methods
+for pass = 1:PASSES
+    for method = 1:METHODS
+        pass_length = PASS_MIN + pass*INTERVAL;
+        xlswrite(strcat('Method_', int2str(method), ' (', date,')'), FIELDNAMES, int2str(pass_length), 'A1');
+        xlswrite(strcat('Method_', int2str(method), ' (', date,')'), RESULTS(:,:,pass,method)', int2str(pass_length), 'A2');
+    end
+end
+
+% Parameters
+for pass = 1:PASSES
+    for parameter = 1:PARAMETERS
+        pass_length = PASS_MIN + pass*INTERVAL;
+        xlswrite(strcat('Parameter_', int2str(parameter), ' (', date,')'), FIELDNAMES, int2str(pass_length), 'A1');
+        xlswrite(strcat('Parameter_', int2str(parameter), ' (', date,')'), VALUES(:,:,pass,parameter)', int2str(pass_length), 'A2');
+    end
+end
 
 %% Display Results
 % This section can be commented out because boxplot rendering can be done
